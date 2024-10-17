@@ -84,7 +84,7 @@ print_header_information(header);
         ifs.read(reinterpret_cast<char*>(samples.get()), header.bytes_amount);
 
         
-ifs.close();
+        ifs.close();
 
 
         vector<vector<int16_t>> rearrangedSamples(channelCount);
@@ -102,25 +102,42 @@ ifs.close();
 }
 
 vector<int> summarize(const vector<int16_t> &samples, int from, int until, int numBuckets) {
-    // TODO: Fassen Sie die samples von Index `from` bis Index `until` (exklusive) in `numBuckets` vielen Einträgen zusammen
-    // indem Sie die durchschnittliche Distanz von einem Sample zum nächsten innerhalb des Buckets bestimmen.
-    // Achtung: Die Indizes `from` und `until` sind nicht zwingend gültig, können also ausserhalb von [0, samples.size()) liegen.
-
-
-    int
+    from = max(from, 0);
+    until = min(until, static_cast<int>(samples.size()));
 
     
 
+    if (numBuckets == 0 || from >= until) {
+        return vector<int>(numBuckets, 0); // Leerer oder unbrauchbarer Bereich
+    }
 
-    vector<int> result();
+    int numBucketSize = (until - from) / numBuckets;
+    vector<int> result(numBuckets, 0);
+
+    for (int i = 0; i < numBuckets; i++) {
+        int newFrom = from + i * numBucketSize;
+        int newUntil = min(newFrom + numBucketSize, until);
+
+        int sum = 0;
+        for (int j = newFrom; j < newUntil; j++) {
+            sum += samples[j];
+        }
+
+        if (newUntil - newFrom > 0) {
+            result[i] = sum / (newUntil - newFrom); // Durchschnitt berechnen
+        }
+    }
+
     return result;
 }
+
 
 // Abspielfunktion für die Audiosamples. Diese Funktion ruft `summarize` auf und ist bereits fertig implementiert.
 void play(const vector<vector<int16_t>> &samples, const int32_t sampleRate) {
     const size_t sampleCount = samples[0].size();
     const size_t channelCount = samples.size();
     const auto timeDelta = 200ms;
+    
     const auto duration = 1000ms*sampleCount/sampleRate;
     const auto start = chrono::system_clock::now();
     
