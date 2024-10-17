@@ -19,8 +19,36 @@ constexpr int ConsoleNumRows = 40;
 struct Header {
     char riff[4];
     uint32_t fileSize;
-    // TODO: Erweitern Sie diese Struktur für den Dateikopf.
+    char wave[4];
+    char fmt[4];
+    uint32_t rest;
+    uint16_t format_type;
+    uint16_t channels_amount;
+    uint32_t freq;
+    uint32_t bytes_per_sec;
+    uint16_t bytes_per_sample_per_chan;
+    uint16_t bits_per_sample_per_chan;
+    char text_data[4];
+    uint32_t bytes_amount;
 };
+
+
+void print_header_information(const Header& header) {
+    cout << "RIFF: " << header.riff[0] << header.riff[1] << header.riff[2] << header.riff[3] << endl;
+    assert(header.riff[0] == 'R' && header.riff[1] == 'I' && header.riff[2] == 'F' && header.riff[3] == 'F');
+    cout << "file size: " << header.fileSize << endl;
+    cout << "wave test: " << header.wave[0] << header.wave[1] << header.wave[2] << header.wave[3] << endl;
+    cout << "fmt text: " << header.fmt[0] << header.fmt[1] << header.fmt[2] << header.fmt[3] << endl;
+    cout << "rest: " << header.rest << endl;
+    cout << "format type: " << header.format_type << endl;
+    cout << "file size: " << header.fileSize << endl;
+    cout << "channels amount: " << header.channels_amount << endl;
+    cout << "frequency: " << header.freq << endl;
+    cout << "bytes per second: " << header.bytes_per_sec << endl;
+    cout << "bytes per sample per channel: " << header.bytes_per_sample_per_chan << endl;
+    cout << "bits per sampe per channel: " << header.bits_per_sample_per_chan << endl;
+    cout << "data text: " << header.text_data[0] << header.text_data[1] << header.text_data[2] << header.text_data[3] << endl;
+}
 
 vector<vector<int16_t>> read(const string& filename, Header& header, int32_t &sampleRate, int32_t &sampleCount, int16_t &channelCount) {
     ifstream ifs;
@@ -28,13 +56,36 @@ vector<vector<int16_t>> read(const string& filename, Header& header, int32_t &sa
     ifs.open(filename, ios::binary);
 
     if (ifs) {
-        // TODO: Lesen Sie den Dateikopf und den Datenteil ein und füllen Sie die Rückgabewerte aus.
+        ifs.read(header.riff, 4);
+    ifs.read(reinterpret_cast<char*>(&header.fileSize), sizeof(header.fileSize));
+ifs.read(header.wave, 4);
+ifs.read(header.fmt, 4);
+ifs.read(reinterpret_cast<char*>(&header.rest), sizeof(header.rest));
+ifs.read(reinterpret_cast<char*>(&header.format_type), sizeof(header.format_type));
+ifs.read(reinterpret_cast<char*>(&header.channels_amount), sizeof(header.channels_amount));
+ifs.read(reinterpret_cast<char*>(&header.freq), sizeof(header.freq));
+ifs.read(reinterpret_cast<char*>(&header.bytes_per_sec), sizeof(header.bytes_per_sec));
+ifs.read(reinterpret_cast<char*>(&header.bytes_per_sample_per_chan), sizeof(header.bytes_per_sample_per_chan));
+ifs.read(reinterpret_cast<char*>(&header.bits_per_sample_per_chan), sizeof(header.bits_per_sample_per_chan));
+ifs.read(header.text_data, 4);
+ifs.read(reinterpret_cast<char*>(&header.bytes_amount), sizeof(header.bytes_amount));
+ 
+print_header_information(header);
 
-        cout << "RIFF: " << header.riff[0] << header.riff[1] << header.riff[2] << header.riff[3] << endl;
-        assert(header.riff[0] == 'R' && header.riff[1] == 'I' && header.riff[2] == 'F' && header.riff[3] == 'F');
-        cout << "file size: " << header.fileSize << endl;
+        // Fülle die Referenzvariablen mit Werten aus dem Header
+        sampleRate = header.freq;                  // Abtastrate (Frequenz)
+        channelCount = header.channels_amount;     // Anzahl der Kanäle
+        sampleCount = header.bytes_amount / header.bytes_per_sample_per_chan; // Anzahl der Samples (Keine doppelte Deklaration mehr)
+        
+        // Erstelle ein Array, um die Samples zu speichern
+        unique_ptr<int16_t[]> samples = make_unique<int16_t[]>(sampleCount);
 
-        unique_ptr<int16_t[]> samples = make_unique<int16_t[]>(0); // TODO: Erstellen Sie hier einen Array der korrekten Grösse und lesen Sie den Datenteil der Datei da hinein.
+        // Lese den Datenteil der Datei in das Array ein
+        ifs.read(reinterpret_cast<char*>(samples.get()), header.bytes_amount);
+
+        
+ifs.close();
+
 
         vector<vector<int16_t>> rearrangedSamples(channelCount);
         uint32_t s = 0;
@@ -54,7 +105,14 @@ vector<int> summarize(const vector<int16_t> &samples, int from, int until, int n
     // TODO: Fassen Sie die samples von Index `from` bis Index `until` (exklusive) in `numBuckets` vielen Einträgen zusammen
     // indem Sie die durchschnittliche Distanz von einem Sample zum nächsten innerhalb des Buckets bestimmen.
     // Achtung: Die Indizes `from` und `until` sind nicht zwingend gültig, können also ausserhalb von [0, samples.size()) liegen.
-    vector<int> result(numBuckets);
+
+
+    int
+
+    
+
+
+    vector<int> result();
     return result;
 }
 
