@@ -364,3 +364,6 @@ FodyWeavers.xsd
 /videos/CentralUnit/001_match.avi
 JupyterLab
 .ipynb_checkpoints/
+
+
+echo_Wave/*

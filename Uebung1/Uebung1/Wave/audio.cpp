@@ -56,7 +56,10 @@ vector<vector<int16_t>> read(const string& filename, Header& header, int32_t &sa
     ifs.open(filename, ios::binary);
 
     if (ifs) {
-        ifs.read(header.riff, 4);
+
+    ifs.read(reinterpret_cast<char *>(&header),sizeof(header));
+
+      /*  ifs.read(header.riff, 4);
     ifs.read(reinterpret_cast<char*>(&header.fileSize), sizeof(header.fileSize));
 ifs.read(header.wave, 4);
 ifs.read(header.fmt, 4);
@@ -68,7 +71,7 @@ ifs.read(reinterpret_cast<char*>(&header.bytes_per_sec), sizeof(header.bytes_per
 ifs.read(reinterpret_cast<char*>(&header.bytes_per_sample_per_chan), sizeof(header.bytes_per_sample_per_chan));
 ifs.read(reinterpret_cast<char*>(&header.bits_per_sample_per_chan), sizeof(header.bits_per_sample_per_chan));
 ifs.read(header.text_data, 4);
-ifs.read(reinterpret_cast<char*>(&header.bytes_amount), sizeof(header.bytes_amount));
+ifs.read(reinterpret_cast<char*>(&header.bytes_amount), sizeof(header.bytes_amount));*/
  
 print_header_information(header);
 
@@ -108,10 +111,12 @@ vector<int> summarize(const vector<int16_t> &samples, int from, int until, int n
     
 
     if (numBuckets == 0 || from >= until) {
-        return vector<int>(numBuckets, 0); // Leerer oder unbrauchbarer Bereich
+        return vector<int>(numBuckets, 0); // Leerer oder unbrauchbarer Bereichreturn vector<int>(numBuckets, 0); 
     }
 
     int numBucketSize = (until - from) / numBuckets;
+
+
     vector<int> result(numBuckets, 0);
 
     for (int i = 0; i < numBuckets; i++) {
@@ -189,6 +194,13 @@ bool write(const string& filename, const vector<vector<int16_t>>& samples, Heade
     ofs.open(filename, ios::binary);
 
     if (ofs) {
+
+        ofs.write(reinterpret_cast<char *>(&header),sizeof(header));
+
+        for (size_t channel = 0; channel < channelCount; ++channel) {
+            ofs.write(reinterpret_cast<const char*>(samples[channel].data()), sampleCount * sizeof(int16_t));
+        }
+        
         // TODO: Schreiben Sie die Samples mit dem korrekten WAVE-Header.
         return true;
     } else {
@@ -201,7 +213,30 @@ vector<vector<int16_t>> addEcho(const vector<vector<int16_t>> &inputSamples, con
     const size_t sampleCount = inputSamples[0].size();
     const size_t channelCount = inputSamples.size();
 
-    vector<vector<int16_t>> outputSamples(channelCount);
+    vector<vector<int16_t>> outputSamples(channelCount,vector<int16_t>(sampleCount));
+
+    const int echoLength = sampleRate / 2;
+
+
+    for (size_t channel = 0; channel < channelCount; ++channel) {
+
+            for(size_t sample = 0; sample < sampleCount; ++sample){
+                
+                int16_t newSample = inputSamples[channel][sample];
+
+                if(sample > echoLength){
+
+                    int16_t echo = inputSamples[channel][sample - echoLength];
+
+                    newSample = ((2 * newSample) + echo)/3;
+                }
+
+                outputSamples[channel][sample] = newSample;
+            }
+    }
+
+
+    
     // TODO: Fügen Sie eine zeitverzögerte, abgeschwächte Kopie der `inputSamples` zu den `inputSamples` hinzu,
     // und geben Sie diese Version mit Echo zurück.
     return outputSamples;
